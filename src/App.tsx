@@ -179,7 +179,7 @@ function App() {
               データを保存する
             </Button>
           </Box>
-          <Map records={records} />
+          {isDBLoading ? <Spinner /> : <Map records={records} />}
         </Container>
       </ChakraProvider>
     </>
