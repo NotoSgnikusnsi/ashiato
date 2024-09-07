@@ -14,40 +14,41 @@ import {
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 
 function App() {
-  const [image, setImage] = useState<string | null>(null);
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
-    null
-  );
-  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  const getCurrentLocation = () => {
-    setIsFetchingLocation(true);
+  const fetchCurrentLocation = () => {
+    setIsLoadingLocation(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          setCurrentLocation({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           });
-          setIsFetchingLocation(false);
+          setIsLoadingLocation(false);
         },
         (error) => {
-          alert("位置情報の取得に失敗しました" + error.message);
-          setIsFetchingLocation(false);
+          alert("位置情報の取得に失敗しました: " + error.message);
+          setIsLoadingLocation(false);
         }
       );
     } else {
       alert("このブラウザーは位置情報に対応していません");
-      setIsFetchingLocation(false);
+      setIsLoadingLocation(false);
     }
   };
 
-  const clickInputFile = () => {
+  const triggerFileInputClick = () => {
     const fileElem = document.getElementById("fileElem") as HTMLInputElement;
     fileElem ? fileElem.click() : alert("fileElem is null");
   };
 
-  const previewSelectImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectFile = e.target.files?.[0];
     if (!selectFile || !selectFile.type.includes("image")) {
       alert("画像が選択されていません");
@@ -55,7 +56,7 @@ function App() {
     }
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImage(reader.result as string);
+      setSelectedImage(reader.result as string);
     };
     reader.readAsDataURL(selectFile);
   };
@@ -73,31 +74,35 @@ function App() {
                 accept="image/*"
                 capture="environment"
                 style={{ display: "none" }}
-                onChange={previewSelectImage}
+                onChange={handleFileChange}
               />
-              <Button colorScheme="blue" onClick={clickInputFile} mr={"4px"}>
+              <Button
+                colorScheme="blue"
+                onClick={triggerFileInputClick}
+                mr={"4px"}
+              >
                 写真を撮る！
               </Button>
-              <Button colorScheme="blue" onClick={getCurrentLocation}>
+              <Button colorScheme="blue" onClick={fetchCurrentLocation}>
                 位置情報を取得する
               </Button>
             </Flex>
-            {isFetchingLocation ? (
+            {isLoadingLocation ? (
               <Spinner />
-            ) : location ? (
+            ) : currentLocation ? (
               <Link
                 isExternal
-                href={`https://www.openstreetmap.org/#map=18/${location.lat}/${location.lon}`}
+                href={`https://www.openstreetmap.org/#map=18/${currentLocation.lat}/${currentLocation.lon}`}
               >
                 <Text mb={"4px"}>
-                  緯度: {location.lat}, 経度: {location.lon}
+                  緯度: {currentLocation.lat}, 経度: {currentLocation.lon}
                   <ExternalLinkIcon mx="2px" />
                 </Text>
               </Link>
             ) : null}
-            {image && (
+            {selectedImage && (
               <img
-                src={image}
+                src={selectedImage}
                 alt="preview"
                 style={{ maxWidth: "300px", height: "auto" }}
               />
