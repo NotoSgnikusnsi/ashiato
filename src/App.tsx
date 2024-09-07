@@ -14,6 +14,7 @@ import {
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { openDB, addRecord, fetchAllRecords } from "./indexedbdClient.ts";
 import type { Place } from "./indexedbdClient.ts";
+import Map from "./Map.tsx";
 
 function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -48,6 +49,7 @@ function App() {
     if (db && selectedImage && currentLocation) {
       const newRecord: Place = {
         id: Date.now().toString(),
+        date: new Date(),
         img: selectedImage as string,
         location: {
           lat: currentLocation?.lat as number,
@@ -176,29 +178,8 @@ function App() {
             <Button colorScheme="blue" onClick={handleAddRecord} mb={"4px"}>
               データを保存する
             </Button>
-            {isDBLoading ? (
-              <Spinner />
-            ) : (
-              records.map((record) => (
-                <Box key={record.id} mb={"4px"}>
-                  <img
-                    src={record.img}
-                    alt="record"
-                    style={{ maxWidth: "300px", height: "auto" }}
-                  />
-                  <Link
-                    isExternal
-                    href={`https://www.openstreetmap.org/#map=18/${record.location.lat}/${record.location.lon}`}
-                  >
-                    <Text mb={"4px"}>
-                      緯度: {record.location.lat}, 経度: {record.location.lon}
-                      <ExternalLinkIcon mx="2px" />
-                    </Text>
-                  </Link>
-                </Box>
-              ))
-            )}
           </Box>
+          {isDBLoading ? <Spinner /> : <Map records={records} />}
         </Container>
       </ChakraProvider>
     </>

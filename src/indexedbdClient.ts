@@ -1,5 +1,6 @@
 type Place = {
   id: string;
+  date: Date;
   img: string;
   location: {
     lat: number;
@@ -20,6 +21,7 @@ const openDB = (): Promise<IDBDatabase> => {
       const objStore = db.createObjectStore("places", { keyPath: "id" });
       objStore.createIndex("img", "img", { unique: true });
       objStore.createIndex("location", "location", { unique: false });
+      objStore.createIndex("date", "date", { unique: false });
     };
 
     request.onerror = (event) => {
