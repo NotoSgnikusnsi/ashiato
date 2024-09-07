@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import {
   ChakraProvider,
@@ -12,6 +12,8 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { openDB, addRecord, fetchAllRecords } from "./indexedbdClient.ts";
+import type { Place } from "./indexedbdClient.ts";
 
 function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -20,6 +22,53 @@ function App() {
     lon: number;
   } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [db, setDb] = useState<IDBDatabase | null>(null);
+  const [records, setRecords] = useState<Place[]>([]);
+  const [isDBLoading, setIsDBLoading] = useState(false);
+
+  const loadAllRecords = () => {
+    setIsDBLoading(true);
+    if (db) {
+      fetchAllRecords(db)
+        .then((records) => {
+          setRecords(records);
+          setIsDBLoading(false);
+        })
+        .catch(() => {
+          console.error("Error fetching records");
+          setIsDBLoading(false);
+        });
+    } else {
+      alert("データベースにアクセスできません");
+      setIsDBLoading(false);
+    }
+  };
+
+  const handleAddRecord = () => {
+    if (db && selectedImage && currentLocation) {
+      const newRecord: Place = {
+        id: Date.now().toString(),
+        img: selectedImage as string,
+        location: {
+          lat: currentLocation?.lat as number,
+          lon: currentLocation?.lon as number,
+        },
+      };
+
+      addRecord(db, newRecord)
+        .then(() => {
+          console.log("Record added successfully");
+          setSelectedImage(null);
+          setCurrentLocation(null);
+          loadAllRecords();
+        })
+        .catch(() => {
+          console.error("Error adding record");
+        });
+    } else {
+      alert("データが不足しています");
+    }
+  };
 
   const fetchCurrentLocation = () => {
     setIsLoadingLocation(true);
@@ -60,6 +109,23 @@ function App() {
     };
     reader.readAsDataURL(selectFile);
   };
+
+  useEffect(() => {
+    openDB()
+      .then((db) => {
+        setDb(db);
+        console.log("データベースにアクセスしました！！！");
+      })
+      .catch((error) => {
+        console.error("データベースにアクセスできません！！！", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (db) {
+      loadAllRecords();
+    }
+  }, [db]);
 
   return (
     <>
@@ -106,6 +172,31 @@ function App() {
                 alt="preview"
                 style={{ maxWidth: "300px", height: "auto" }}
               />
+            )}
+            <Button colorScheme="blue" onClick={handleAddRecord} mb={"4px"}>
+              データを保存する
+            </Button>
+            {isDBLoading ? (
+              <Spinner />
+            ) : (
+              records.map((record) => (
+                <Box key={record.id} mb={"4px"}>
+                  <img
+                    src={record.img}
+                    alt="record"
+                    style={{ maxWidth: "300px", height: "auto" }}
+                  />
+                  <Link
+                    isExternal
+                    href={`https://www.openstreetmap.org/#map=18/${record.location.lat}/${record.location.lon}`}
+                  >
+                    <Text mb={"4px"}>
+                      緯度: {record.location.lat}, 経度: {record.location.lon}
+                      <ExternalLinkIcon mx="2px" />
+                    </Text>
+                  </Link>
+                </Box>
+              ))
             )}
           </Box>
         </Container>
