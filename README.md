@@ -23,7 +23,7 @@
 ### 1. 写真撮影 + 位置情報取得 + IndexedDB保存機能
 
 1. **写真撮影機能の実装**:
-   - [ ] `MediaDevices.getUserMedia()` を使用してカメラにアクセス
+   - [ ] `capture="environment"` を使用してカメラにアクセス
    - [ ] 撮影した画像データ（Blob/Base64形式）を取得
    - [ ] プレビューの表示
 
