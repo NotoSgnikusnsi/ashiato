@@ -42,8 +42,8 @@ function App() {
       <ChakraProvider>
         <Container maxW={"2xl"} centerContent>
           <Box padding={4} maxW={"md"}>
-            <Heading>あしあと</Heading>
-            <div>
+            <Heading mb={"4px"}>あしあと</Heading>
+            <Box mb={"4px"}>
               <input
                 type="file"
                 id="fileElem"
@@ -55,7 +55,7 @@ function App() {
               <Button colorScheme="blue" onClick={handleButtonClick}>
                 写真を撮る！
               </Button>
-            </div>
+            </Box>
             {image && (
               <img
                 src={image}
