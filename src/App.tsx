@@ -2,7 +2,6 @@ import { useState } from "react";
 import "./App.css";
 import {
   ChakraProvider,
-  Text,
   Button,
   Heading,
   Container,
