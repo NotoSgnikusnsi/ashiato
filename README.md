@@ -18,6 +18,9 @@
 - **UI/UXフレームワーク**: Chakra UI
 - **デプロイ**: Deno Deploy
 
+## デプロイ
+[Deno Deploy](https://noto-ashiato.deno.dev/)
+
 ## 実装ステップ
 
 ### 1. 写真撮影 + 位置情報取得 + IndexedDB保存機能
