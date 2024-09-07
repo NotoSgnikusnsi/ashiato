@@ -13,7 +13,7 @@
 - **ランタイム**: Node.js
 - **フロントエンドフレームワーク**: Vite (React + TypeScript)
 - **データベース**: IndexedDB
-- **写真撮影機能**: MediaDevices API
+- **写真撮影機能**: input capture
 - **位置情報**: Geolocation API
 - **UI/UXフレームワーク**: Chakra UI
 - **デプロイ**: Deno Deploy
