@@ -5,24 +5,36 @@ import L from "leaflet";
 L.Icon.Default.imagePath =
   "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/";
 import type { Place } from "./indexedbdClient.ts";
-import { ChakraProvider, Text } from "@chakra-ui/react";
+import { ChakraProvider, Image, Heading } from "@chakra-ui/react";
 
 type Props = {
   records: Place[];
+  location: { lat: number; lon: number } | null;
 };
 
-const Map: React.FC<Props> = ({ records }) => {
-  const position: LatLngExpression = [34.6623932, 133.9284194];
+const Map: React.FC<Props> = ({ records, location }) => {
+  // マップ初期位置
+  const position: LatLngExpression =
+    location?.lat && location?.lon
+      ? [location.lat, location.lon]
+      : records.length > 0
+      ? [
+          records[records.length - 1].location.lat,
+          records[records.length - 1].location.lon,
+        ]
+      : [31.7683, 35.2137];
 
   // 初期マップズームレベル
-  const zoom = 13;
+  const zoom = 6;
+  const height = "100dvh";
+  const width = "100vw";
 
   return (
     <ChakraProvider>
       <MapContainer
         center={position}
         zoom={zoom}
-        style={{ height: "100vh", width: "100%" }}
+        style={{ height: height, width: width }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -34,12 +46,22 @@ const Map: React.FC<Props> = ({ records }) => {
             position={[record.location.lat, record.location.lon]}
           >
             <Popup>
-              <img
+              <Heading
+                fontSize={"sm"}
+                fontWeight={"normal"}
+                color={"gray"}
+                pb={1}
+              >
+                {record.date.toDateString()}
+              </Heading>
+              <Heading fontSize={"2xl"} pb={1}>
+                {record.title}
+              </Heading>
+              <Image
                 src={record.img}
                 alt="record"
                 style={{ maxWidth: "200px", height: "auto" }}
               />
-              <Text>{record.date.toDateString()}</Text>
             </Popup>
           </Marker>
         ))}
