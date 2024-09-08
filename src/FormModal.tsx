@@ -73,6 +73,12 @@ const FormModal: React.FC<FormModalProps> = ({
           <ModalHeader>あしあとを残す</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={2}>
+            <FormControl mb={2}>
+              <Input
+                placeholder="ここはどこですか？"
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </FormControl>
             <Box pb={2}>
               {imageSrc && <Image src={imageSrc} alt="撮影した画像" mb={2} />}
               {location && (
@@ -81,12 +87,6 @@ const FormModal: React.FC<FormModalProps> = ({
                 </Text>
               )}
             </Box>
-            <FormControl>
-              <Input
-                placeholder="ここはどこですか？"
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </FormControl>
           </ModalBody>
 
           <ModalFooter>
