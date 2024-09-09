@@ -7,6 +7,8 @@ type Place = {
     lat: number;
     lon: number;
   };
+  country?: string;
+  region?: string;
 };
 
 const dbName = "test_ashiato";
@@ -24,6 +26,8 @@ const openDB = (): Promise<IDBDatabase> => {
       objStore.createIndex("title", "title", { unique: false });
       objStore.createIndex("img", "img", { unique: true });
       objStore.createIndex("location", "location", { unique: false });
+      objStore.createIndex("country", "country", { unique: false });
+      objStore.createIndex("region", "region", { unique: false });
     };
 
     request.onerror = (event) => {

@@ -5,8 +5,15 @@ import L from "leaflet";
 L.Icon.Default.imagePath =
   "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/";
 import type { Place } from "./indexedbdClient.ts";
-import { ChakraProvider, Image, Heading, Button } from "@chakra-ui/react";
+import {
+  ChakraProvider,
+  Image,
+  Heading,
+  IconButton,
+  Flex,
+} from "@chakra-ui/react";
 import { deleteRecord } from "./indexedbdClient.ts";
+import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 
 type Props = {
   records: Place[];
@@ -80,15 +87,36 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
               <Heading fontSize={"2xl"} pb={1}>
                 {record.title}
               </Heading>
+              <Heading fontSize={"sm"} pb={1}>
+                {record.country} {record.region}
+              </Heading>
               <Image
                 src={record.img}
                 alt="record"
                 style={{ maxWidth: "200px", height: "auto" }}
                 mb={2}
               />
-              <Button onClick={() => handleDeleteRecord(record.id)}>
-                削除
-              </Button>
+              <Flex>
+                <IconButton
+                  aria-label="update"
+                  size={"sm"}
+                  colorScheme="blue"
+                  mr={1}
+                  icon={<EditIcon />}
+                  onClick={() => {
+                    alert("編集機能はまだ実装されていません，ごめんね．");
+                  }}
+                ></IconButton>
+                <IconButton
+                  aria-label="delete"
+                  size={"sm"}
+                  colorScheme="red"
+                  icon={<DeleteIcon />}
+                  onClick={() => {
+                    handleDeleteRecord(record.id);
+                  }}
+                />
+              </Flex>
             </Popup>
           </Marker>
         ))}

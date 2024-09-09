@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { addRecord } from "./indexedbdClient.ts";
+import { reverseGeocode } from "./geocodeClient.ts";
 import type { Place } from "./indexedbdClient.ts";
 
 interface FormModalProps {
@@ -36,8 +37,9 @@ const FormModal: React.FC<FormModalProps> = ({
 }) => {
   const [title, setTitle] = useState<string>("");
 
-  const handleAddRecord = () => {
+  const handleAddRecord = async () => {
     if (db && imageSrc && location) {
+      const geocodeData = await reverseGeocode(location.lat, location.lon);
       const newRecord: Place = {
         id: Date.now().toString(),
         date: new Date(),
@@ -47,6 +49,8 @@ const FormModal: React.FC<FormModalProps> = ({
           lat: location.lat,
           lon: location.lon,
         },
+        country: geocodeData?.country,
+        region: geocodeData?.region,
       };
 
       addRecord(db, newRecord)
