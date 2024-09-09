@@ -35,7 +35,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
       : [31.7683, 35.2137];
 
   // 初期マップズームレベル
-  const zoom = 6;
+  const zoom = 12;
   const height = "100dvh";
   const width = "100vw";
 
