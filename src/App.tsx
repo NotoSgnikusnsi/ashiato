@@ -114,7 +114,12 @@ function App() {
           {isDBLoading ? (
             <Spinner />
           ) : (
-            <Map records={records} location={currentLocation} />
+            <Map
+              records={records}
+              location={currentLocation}
+              db={db}
+              loadRecords={loadAllRecords}
+            />
           )}
           <Box position="fixed" bottom="25px" right="20px" zIndex="1000">
             <IconButton
@@ -138,7 +143,7 @@ function App() {
               imageSrc={selectedImage}
               location={currentLocation}
               db={db}
-              reloadRecords={loadAllRecords}
+              loadRecords={loadAllRecords}
             />
           </Box>
         </Container>

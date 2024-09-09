@@ -23,7 +23,7 @@ interface FormModalProps {
   imageSrc: string | null;
   location: { lat: number; lon: number } | null;
   db: IDBDatabase | null;
-  reloadRecords: () => void;
+  loadRecords: () => void;
 }
 
 const FormModal: React.FC<FormModalProps> = ({
@@ -32,7 +32,7 @@ const FormModal: React.FC<FormModalProps> = ({
   imageSrc,
   location,
   db,
-  reloadRecords,
+  loadRecords,
 }) => {
   const [title, setTitle] = useState<string>("");
 
@@ -54,7 +54,7 @@ const FormModal: React.FC<FormModalProps> = ({
           console.log("データを追加しました！");
           setTitle("");
           onClose();
-          reloadRecords();
+          loadRecords();
         })
         .catch((error) => {
           console.error("Error adding record: ", error);

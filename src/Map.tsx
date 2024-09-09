@@ -5,14 +5,24 @@ import L from "leaflet";
 L.Icon.Default.imagePath =
   "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/";
 import type { Place } from "./indexedbdClient.ts";
-import { ChakraProvider, Image, Heading, Button } from "@chakra-ui/react";
+import {
+  ChakraProvider,
+  Text,
+  Image,
+  Heading,
+  Box,
+  Button,
+} from "@chakra-ui/react";
+import { deleteRecord } from "./indexedbdClient.ts";
 
 type Props = {
   records: Place[];
   location: { lat: number; lon: number } | null;
+  db: IDBDatabase | null;
+  loadRecords: () => void;
 };
 
-const Map: React.FC<Props> = ({ records, location }) => {
+const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   // マップ初期位置
   const position: LatLngExpression =
     location?.lat && location?.lon
@@ -29,6 +39,26 @@ const Map: React.FC<Props> = ({ records, location }) => {
   const height = "100dvh";
   const width = "100vw";
 
+  const handleDeleteRecord = (id: string) => {
+    const isDelete = confirm("削除しますか？");
+    if (isDelete) {
+      if (db) {
+        deleteRecord(db, id)
+          .then(() => {
+            console.log("Record deleted successfully");
+            loadRecords();
+          })
+          .catch(() => {
+            console.error("Error deleting record");
+            alert("データの削除に失敗しました");
+          });
+      } else {
+        console.error("データベースが初期化されていません");
+        alert("データベースが初期化されていません");
+      }
+    }
+  };
+
   return (
     <ChakraProvider>
       <MapContainer
@@ -40,9 +70,9 @@ const Map: React.FC<Props> = ({ records, location }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {records.map((record, index) => (
+        {records.map((record) => (
           <Marker
-            key={index}
+            key={record.id}
             position={[record.location.lat, record.location.lon]}
           >
             <Popup>
@@ -61,8 +91,11 @@ const Map: React.FC<Props> = ({ records, location }) => {
                 src={record.img}
                 alt="record"
                 style={{ maxWidth: "200px", height: "auto" }}
+                mb={2}
               />
-              <Button onClick={() => console.log("clicked")}>削除</Button>
+              <Button onClick={() => handleDeleteRecord(record.id)}>
+                削除
+              </Button>
             </Popup>
           </Marker>
         ))}
