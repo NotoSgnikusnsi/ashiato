@@ -5,14 +5,7 @@ import L from "leaflet";
 L.Icon.Default.imagePath =
   "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/";
 import type { Place } from "./indexedbdClient.ts";
-import {
-  ChakraProvider,
-  Text,
-  Image,
-  Heading,
-  Box,
-  Button,
-} from "@chakra-ui/react";
+import { ChakraProvider, Image, Heading, Button } from "@chakra-ui/react";
 import { deleteRecord } from "./indexedbdClient.ts";
 
 type Props = {
