@@ -84,5 +84,43 @@ const fetchAllRecords = (db: IDBDatabase): Promise<Place[]> => {
   });
 };
 
-export { openDB, addRecord, fetchAllRecords };
+const deleteRecord = (db: IDBDatabase, id: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction("places", "readwrite");
+    const objStore = transaction.objectStore("places");
+
+    const request = objStore.delete(id);
+
+    request.onerror = function () {
+      console.error("Error deleting record");
+      reject();
+    };
+
+    request.onsuccess = function () {
+      console.log("Record deleted successfully");
+      resolve();
+    };
+  });
+};
+
+const updateRecord = (db: IDBDatabase, record: Place): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction("places", "readwrite");
+    const objStore = transaction.objectStore("places");
+
+    const request = objStore.put(record);
+
+    request.onerror = function () {
+      console.error("Error updating record");
+      reject();
+    };
+
+    request.onsuccess = function () {
+      console.log("Record updated successfully");
+      resolve();
+    };
+  });
+};
+
+export { openDB, addRecord, fetchAllRecords, deleteRecord, updateRecord };
 export type { Place };
