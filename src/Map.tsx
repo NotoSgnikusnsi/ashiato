@@ -5,7 +5,7 @@ import L from "leaflet";
 L.Icon.Default.imagePath =
   "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/";
 import type { Place } from "./indexedbdClient.ts";
-import { ChakraProvider, Image, Heading } from "@chakra-ui/react";
+import { ChakraProvider, Image, Heading, Button } from "@chakra-ui/react";
 
 type Props = {
   records: Place[];
@@ -62,6 +62,7 @@ const Map: React.FC<Props> = ({ records, location }) => {
                 alt="record"
                 style={{ maxWidth: "200px", height: "auto" }}
               />
+              <Button onClick={() => console.log("clicked")}>削除</Button>
             </Popup>
           </Marker>
         ))}
