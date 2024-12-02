@@ -8,7 +8,7 @@ import {
   IconButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { FaShoePrints } from "react-icons/fa6";
+import { FaShoePrints, FaRegCompass } from "react-icons/fa6";
 import { openDB, fetchAllRecords } from "./indexedbdClient.ts";
 import type { Place } from "./indexedbdClient.ts";
 import Map from "./Map.tsx";
@@ -118,9 +118,18 @@ function App() {
               records={records}
               location={currentLocation}
               db={db}
-              loadRecords={loadAllRecords}
+              loadRecords={fetchCurrentLocation}
             />
           )}
+          <Box position="fixed" bottom="80px" right="20px" zIndex="1000">
+            <IconButton
+              icon={<FaRegCompass />}
+              colorScheme="blue"
+              aria-label="現在地に戻る"
+              size={"lg"}
+              onClick={loadAllRecords}
+            />
+          </Box>
           <Box position="fixed" bottom="25px" right="20px" zIndex="1000">
             <IconButton
               icon={<FaShoePrints />}
