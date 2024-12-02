@@ -1,4 +1,10 @@
-import { MapContainer, Popup, Polyline, CircleMarker } from "react-leaflet";
+import {
+  MapContainer,
+  Popup,
+  Polyline,
+  CircleMarker,
+  useMapEvents,
+} from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Place } from "./indexedbdClient.ts";
@@ -11,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { deleteRecord } from "./indexedbdClient.ts";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { useState } from "react";
 
 type Props = {
   records: Place[];
@@ -20,7 +27,8 @@ type Props = {
 };
 
 const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
-  // マップ初期位置
+  const [zoomLevel, setZoomLevel] = useState(12);
+
   const position: LatLngExpression =
     location?.lat && location?.lon
       ? [location.lat, location.lon]
@@ -31,8 +39,6 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
         ]
       : [31.7683, 35.2137];
 
-  // 初期マップズームレベル
-  const zoom = 12;
   const height = "100dvh";
   const width = "100vw";
 
@@ -62,22 +68,36 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
     }
   };
 
+  const MapEvents = () => {
+    useMapEvents({
+      zoomend: (e) => {
+        setZoomLevel(e.target.getZoom());
+      },
+    });
+    return null;
+  };
+
+  const getRadius = (zoom: number) => {
+    if (zoom >= 12) return 50;
+    if (zoom >= 10) return 30;
+    if (zoom >= 8) return 20;
+    return 10;
+  };
+
   return (
     <ChakraProvider>
       <MapContainer
         center={position}
-        zoom={zoom}
+        zoom={zoomLevel}
         style={{ height: height, width: width, backgroundColor: "snow" }}
       >
-        {/* <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        /> */}
+        <MapEvents />
         <Polyline positions={polyline} />
         {records.map((record) => (
           <CircleMarker
+            key={record.id}
             center={[record.location.lat, record.location.lon]}
-            radius={50}
+            radius={getRadius(zoomLevel)}
           >
             <Popup>
               <Heading
