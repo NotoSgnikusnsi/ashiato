@@ -1,13 +1,5 @@
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polyline,
-  Circle,
-  CircleMarker,
-} from "react-leaflet";
-import { icon, LatLngExpression } from "leaflet";
+import { MapContainer, Popup, Polyline, CircleMarker } from "react-leaflet";
+import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Place } from "./indexedbdClient.ts";
 import {
@@ -19,7 +11,6 @@ import {
 } from "@chakra-ui/react";
 import { deleteRecord } from "./indexedbdClient.ts";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import PopupIcon from "./assets/popup.svg";
 
 type Props = {
   records: Place[];
