@@ -62,7 +62,7 @@ function App() {
     }
   };
 
-  const handleIconButtonClick = () => {
+  const handleAddLocationIconButtonClick = () => {
     fetchCurrentLocation();
     const fileElem = document.getElementById("fileElem") as HTMLInputElement;
     fileElem ? fileElem.click() : alert("カメラの起動に失敗しました");
@@ -136,7 +136,7 @@ function App() {
               colorScheme="green"
               aria-label="あしあとの残す"
               size={"lg"}
-              onClick={handleIconButtonClick}
+              onClick={handleAddLocationIconButtonClick}
             />
             <input
               type="file"
