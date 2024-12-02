@@ -1,9 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { LatLngExpression } from "leaflet";
+import { icon, LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-L.Icon.Default.imagePath =
-  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/";
 import type { Place } from "./indexedbdClient.ts";
 import {
   ChakraProvider,
@@ -14,6 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { deleteRecord } from "./indexedbdClient.ts";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import PopupIcon from "./assets/popup.svg";
 
 type Props = {
   records: Place[];
@@ -74,6 +72,10 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
           <Marker
             key={record.id}
             position={[record.location.lat, record.location.lon]}
+            icon={icon({
+              iconUrl: PopupIcon,
+              iconSize: [35, 35],
+            })}
           >
             <Popup>
               <Heading
