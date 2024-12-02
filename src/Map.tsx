@@ -1,4 +1,12 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+  Circle,
+  CircleMarker,
+} from "react-leaflet";
 import { icon, LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Place } from "./indexedbdClient.ts";
@@ -37,6 +45,12 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   const height = "100dvh";
   const width = "100vw";
 
+  const polyline: LatLngExpression[] = records
+    .map(
+      (record) => [record.location.lat, record.location.lon] as LatLngExpression
+    )
+    .sort();
+
   const handleDeleteRecord = (id: string) => {
     const isDelete = confirm("削除しますか？");
     if (isDelete) {
@@ -62,20 +76,17 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
       <MapContainer
         center={position}
         zoom={zoom}
-        style={{ height: height, width: width }}
+        style={{ height: height, width: width, backgroundColor: "snow" }}
       >
-        <TileLayer
+        {/* <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        /> */}
+        <Polyline positions={polyline} />
         {records.map((record) => (
-          <Marker
-            key={record.id}
-            position={[record.location.lat, record.location.lon]}
-            icon={icon({
-              iconUrl: PopupIcon,
-              iconSize: [35, 35],
-            })}
+          <CircleMarker
+            center={[record.location.lat, record.location.lon]}
+            radius={50}
           >
             <Popup>
               <Heading
@@ -120,7 +131,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
                 />
               </Flex>
             </Popup>
-          </Marker>
+          </CircleMarker>
         ))}
       </MapContainer>
     </ChakraProvider>
