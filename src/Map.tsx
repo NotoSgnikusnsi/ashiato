@@ -93,7 +93,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
               <Image
                 src={record.img}
                 alt="record"
-                style={{ maxWidth: "200px", height: "auto" }}
+                style={{ maxWidth: "200px", width: "100%" }}
                 mb={2}
               />
               <Flex>
