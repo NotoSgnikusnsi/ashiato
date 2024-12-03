@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./App.css";
+import "./style/App.css";
 import {
   ChakraProvider,
   Container,
@@ -9,10 +9,10 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { FaShoePrints, FaRegCompass } from "react-icons/fa6";
-import { openDB, fetchAllRecords } from "./indexedbdClient.ts";
-import type { Place } from "./indexedbdClient.ts";
-import Map from "./Map.tsx";
-import FormModal from "./FormModal.tsx";
+import { openDB, fetchAllRecords } from "./services/indexedbdClient.ts";
+import type { Place } from "./services/indexedbdClient.ts";
+import Map from "./components/Map.tsx";
+import FormModal from "./components/FormModal.tsx";
 
 function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);

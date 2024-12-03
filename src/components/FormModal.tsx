@@ -14,9 +14,9 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { addRecord } from "./indexedbdClient.ts";
-import { reverseGeocode } from "./geocodeClient.ts";
-import type { Place } from "./indexedbdClient.ts";
+import { addRecord } from "../services/indexedbdClient.ts";
+import { reverseGeocode } from "../services/geocodeClient.ts";
+import type { Place } from "../services/indexedbdClient.ts";
 
 interface FormModalProps {
   isOpen: boolean;
