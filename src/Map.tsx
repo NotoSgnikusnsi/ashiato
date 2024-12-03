@@ -4,6 +4,7 @@ import {
   Polyline,
   CircleMarker,
   useMapEvents,
+  TileLayer,
 } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -77,13 +78,6 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
     return null;
   };
 
-  const getRadius = (zoom: number) => {
-    if (zoom >= 12) return 50;
-    if (zoom >= 10) return 30;
-    if (zoom >= 8) return 20;
-    return 10;
-  };
-
   return (
     <ChakraProvider>
       <MapContainer
@@ -91,13 +85,17 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
         zoom={zoomLevel}
         style={{ height: height, width: width, backgroundColor: "snow" }}
       >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
         <MapEvents />
         <Polyline positions={polyline} />
         {records.map((record) => (
           <CircleMarker
             key={record.id}
             center={[record.location.lat, record.location.lon]}
-            radius={getRadius(zoomLevel)}
+            radius={zoomLevel ** 1.6}
           >
             <Popup>
               <Heading
