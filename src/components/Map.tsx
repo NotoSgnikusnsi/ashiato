@@ -44,10 +44,10 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   const width = "100vw";
 
   const polyline: LatLngExpression[] = records
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map(
       (record) => [record.location.lat, record.location.lon] as LatLngExpression
-    )
-    .sort();
+    );
 
   const handleDeleteRecord = (id: string) => {
     const isDelete = confirm("削除しますか？");
