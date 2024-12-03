@@ -118,7 +118,7 @@ function App() {
               records={records}
               location={currentLocation}
               db={db}
-              loadRecords={fetchCurrentLocation}
+              loadRecords={loadAllRecords}
             />
           )}
           <Box position="fixed" bottom="80px" right="20px" zIndex="1000">
