@@ -9,8 +9,8 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { FaShoePrints, FaRegCompass } from "react-icons/fa6";
-import { openDB, fetchAllRecords } from "./services/indexedbdClient.ts";
-import type { Place } from "./services/indexedbdClient.ts";
+import { openDB, fetchAllRecords } from "./services/indexeddbClient.ts";
+import type { Place } from "./services/indexeddbClient.ts";
 import Map from "./components/Map.tsx";
 import FormModal from "./components/FormModal.tsx";
 
