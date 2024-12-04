@@ -107,7 +107,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
         <Polyline positions={polyline} />
         {records.map((record) => (
           <CircleMarker
-            key={currentZoomLevel}
+            key={record.id}
             center={[record.location.lat, record.location.lon]}
             radius={currentZoomLevel ** 1.6}
           >
