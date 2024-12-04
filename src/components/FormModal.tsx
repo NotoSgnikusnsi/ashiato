@@ -20,24 +20,25 @@ import type { Place } from "../services/indexedbdClient.ts";
 
 interface FormModalProps {
   isOpen: boolean;
-  onClose: () => void;
   imageSrc: string | null;
   location: { lat: number; lon: number } | null;
   db: IDBDatabase | null;
+  onClose: () => void;
   loadRecords: () => void;
 }
 
 const FormModal: React.FC<FormModalProps> = ({
   isOpen,
-  onClose,
   imageSrc,
   location,
   db,
+  onClose,
   loadRecords,
 }) => {
   const [title, setTitle] = useState<string>("");
 
-  const handleAddRecord = async () => {
+  // セーブボタンが押されたとき、データベースに書き込む
+  const handleSaveLocationButtonClick = async () => {
     if (db && imageSrc && location) {
       const geocodeData = await reverseGeocode(location.lat, location.lon);
       const newRecord: Place = {
@@ -94,7 +95,11 @@ const FormModal: React.FC<FormModalProps> = ({
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleAddRecord}>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              onClick={handleSaveLocationButtonClick}
+            >
               Save
             </Button>
             <Button onClick={onClose}>Cancel</Button>

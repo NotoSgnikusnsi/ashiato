@@ -25,6 +25,7 @@ function App() {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  // 全てのレコードを読み込む
   const loadAllRecords = () => {
     setIsDBLoading(true);
     if (db) {
@@ -43,6 +44,7 @@ function App() {
     }
   };
 
+  // 現在地を取得する
   const fetchCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -62,28 +64,28 @@ function App() {
     }
   };
 
+  // ボタンが押されたとき、カメラを起動して画像を選択する
   const handleAddLocationIconButtonClick = () => {
     fetchCurrentLocation();
     const fileElem = document.getElementById("fileElem") as HTMLInputElement;
     fileElem ? fileElem.click() : alert("カメラの起動に失敗しました");
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 画像が選択されたとき、画像を読み込み表示する
+  const handleSelectImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const selectFile = e.target.files?.[0];
     if (!selectFile || !selectFile.type.includes("image")) {
       alert("画像が選択されていません");
       return;
     }
-    readFile(selectFile);
-  };
-
-  const readFile = (file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setSelectedImage(reader.result as string);
       onOpen();
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(selectFile);
   };
 
   useEffect(() => {
@@ -144,7 +146,7 @@ function App() {
               accept="image/*"
               capture="environment"
               style={{ display: "none" }}
-              onChange={handleFileChange}
+              onChange={handleSelectImageChange}
             />
             <FormModal
               isOpen={isOpen}

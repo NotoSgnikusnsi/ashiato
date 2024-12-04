@@ -28,9 +28,13 @@ type Props = {
 };
 
 const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
+  // 初期値を設定する
   const [zoomLevel, setZoomLevel] = useState(12);
+  const height = "100dvh";
+  const width = "100vw";
 
-  const position: LatLngExpression =
+  // 初期のマップの位置を設定する
+  const initialPosition: LatLngExpression =
     location?.lat && location?.lon
       ? [location.lat, location.lon]
       : records.length > 0
@@ -40,16 +44,15 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
         ]
       : [31.7683, 35.2137];
 
-  const height = "100dvh";
-  const width = "100vw";
-
+  // マーカーを繋ぐ線を日時順で設定する
   const polyline: LatLngExpression[] = records
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .map(
       (record) => [record.location.lat, record.location.lon] as LatLngExpression
     );
 
-  const handleDeleteRecord = (id: string) => {
+  // 削除ボタンを押したとき、データを削除する
+  const handleDeleteButtonClick = (id: string) => {
     const isDelete = confirm("削除しますか？");
     if (isDelete) {
       if (db) {
@@ -81,7 +84,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   return (
     <ChakraProvider>
       <MapContainer
-        center={position}
+        center={initialPosition}
         zoom={zoomLevel}
         style={{ height: height, width: width, backgroundColor: "snow" }}
       >
@@ -135,7 +138,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
                   colorScheme="red"
                   icon={<DeleteIcon />}
                   onClick={() => {
-                    handleDeleteRecord(record.id);
+                    handleDeleteButtonClick(record.id);
                   }}
                 />
               </Flex>
