@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { LatLngExpression } from "leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   MapContainer,
   Popup,
@@ -6,19 +9,22 @@ import {
   useMapEvents,
   TileLayer,
 } from "react-leaflet";
-import { LatLngExpression } from "leaflet";
-import "leaflet/dist/leaflet.css";
-import type { Place } from "../services/indexeddbClient.ts";
+
 import {
   ChakraProvider,
   Image,
   Heading,
   IconButton,
   Flex,
+  Box,
+  Button,
+  ButtonGroup,
 } from "@chakra-ui/react";
-import { deleteRecord } from "../services/indexeddbClient.ts";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { useState } from "react";
+import { FaEarthAsia, FaMap, FaTreeCity } from "react-icons/fa6";
+
+import { deleteRecord } from "../services/indexeddbClient.ts";
+import type { Place } from "../services/indexeddbClient.ts";
 
 type Props = {
   records: Place[];
@@ -29,12 +35,13 @@ type Props = {
 
 const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   // 初期値を設定する
-  const [zoomLevel, setZoomLevel] = useState(12);
+  const [currentZoomLevel, setCurrentZoomLevel] = useState(12);
+  const [initialZoomLevel, setInitialZoomLevel] = useState(12);
   const height = "100dvh";
   const width = "100vw";
 
   // 初期のマップの位置を設定する
-  const initialPosition: LatLngExpression =
+  const [initialPosition, setInitialPosition] = useState<LatLngExpression>(
     location?.lat && location?.lon
       ? [location.lat, location.lon]
       : records.length > 0
@@ -42,8 +49,8 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
           records[records.length - 1].location.lat,
           records[records.length - 1].location.lon,
         ]
-      : [31.7683, 35.2137];
-
+      : [31.7683, 35.2137]
+  );
   // マーカーを繋ぐ線を日時順で設定する
   const polyline: LatLngExpression[] = records
     .sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -75,7 +82,10 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   const MapEvents = () => {
     useMapEvents({
       zoomend: (e) => {
-        setZoomLevel(e.target.getZoom());
+        setCurrentZoomLevel(e.target.getZoom());
+      },
+      move: (e) => {
+        setInitialPosition(e.target.getCenter());
       },
     });
     return null;
@@ -84,8 +94,9 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
   return (
     <ChakraProvider>
       <MapContainer
+        key={initialZoomLevel}
         center={initialPosition}
-        zoom={zoomLevel}
+        zoom={initialZoomLevel}
         style={{ height: height, width: width, backgroundColor: "snow" }}
       >
         <TileLayer
@@ -96,9 +107,9 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
         <Polyline positions={polyline} />
         {records.map((record) => (
           <CircleMarker
-            key={record.id}
+            key={currentZoomLevel}
             center={[record.location.lat, record.location.lon]}
-            radius={zoomLevel ** 1.6}
+            radius={currentZoomLevel ** 1.6}
           >
             <Popup>
               <Heading
@@ -145,7 +156,41 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
             </Popup>
           </CircleMarker>
         ))}
+        <CircleMarker
+          key={`${initialPosition}`}
+          center={initialPosition}
+          radius={2}
+          color="red"
+        />
       </MapContainer>
+      <Box position="fixed" bottom="20px" left="20px" zIndex="1000">
+        <ButtonGroup isAttached>
+          <Button
+            onClick={() => {
+              setInitialZoomLevel(3);
+              setCurrentZoomLevel(3);
+            }}
+          >
+            <FaEarthAsia />
+          </Button>
+          <Button
+            onClick={() => {
+              setInitialZoomLevel(5);
+              setCurrentZoomLevel(5);
+            }}
+          >
+            <FaMap />
+          </Button>
+          <Button
+            onClick={() => {
+              setInitialZoomLevel(10);
+              setCurrentZoomLevel(10);
+            }}
+          >
+            <FaTreeCity />
+          </Button>
+        </ButtonGroup>
+      </Box>
     </ChakraProvider>
   );
 };
