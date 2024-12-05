@@ -8,7 +8,8 @@ import {
 } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { Place } from "../services/indexedbdClient.ts";
+import type { Place } from "../services/indexeddbClient.ts";
+import { deleteRecord } from "../services/indexeddbClient.ts";
 import {
   ChakraProvider,
   Image,
@@ -16,7 +17,6 @@ import {
   IconButton,
   Flex,
 } from "@chakra-ui/react";
-import { deleteRecord } from "../services/indexedbdClient.ts";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { useState } from "react";
 
