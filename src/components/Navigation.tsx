@@ -23,10 +23,11 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onViewChange }) =>
       left="0"
       right="0"
       zIndex={1000}
-      bg="white"
+      bg="rgba(10, 14, 30, 0.96)"
       borderTop="1px solid"
-      borderColor="gray.100"
-      boxShadow="0 -2px 12px rgba(0,0,0,0.07)"
+      borderColor="rgba(244, 162, 97, 0.15)"
+      boxShadow="0 -4px 24px rgba(0,0,0,0.5)"
+      backdropFilter="blur(12px)"
       pb="env(safe-area-inset-bottom, 0)"
     >
       <LayoutGroup>
@@ -57,8 +58,9 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onViewChange }) =>
                       left: "15%",
                       right: "15%",
                       height: 3,
-                      background: "#38A169",
+                      background: "linear-gradient(90deg, #f4a261, #ffd700)",
                       borderRadius: 4,
+                      boxShadow: "0 0 8px rgba(244, 162, 97, 0.7)",
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
@@ -70,13 +72,14 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onViewChange }) =>
                   <Box
                     as={Icon}
                     fontSize="20px"
-                    color={isActive ? "green.500" : "gray.400"}
+                    color={isActive ? "#f4a261" : "rgba(255,255,255,0.35)"}
                     transition="color 0.2s"
+                    filter={isActive ? "drop-shadow(0 0 6px rgba(244,162,97,0.8))" : "none"}
                   />
                 </motion.div>
                 <Text
                   fontSize="10px"
-                  color={isActive ? "green.500" : "gray.400"}
+                  color={isActive ? "#f4a261" : "rgba(255,255,255,0.3)"}
                   fontWeight={isActive ? "bold" : "normal"}
                   transition="color 0.2s"
                   mt="2px"

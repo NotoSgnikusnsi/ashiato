@@ -31,6 +31,7 @@ function App() {
   const [currentView, setCurrentView] = useState<View>("map");
   const [showStamp, setShowStamp] = useState(false);
   const [flyToTrigger, setFlyToTrigger] = useState(0);
+  const [revealCount, setRevealCount] = useState(0);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -145,6 +146,7 @@ function App() {
   };
 
   const handleSaveSuccess = () => {
+    setRevealCount((n) => n + 1);
     setShowStamp(true);
     setTimeout(() => setShowStamp(false), 2200);
   };
@@ -217,6 +219,8 @@ function App() {
                 db={db}
                 loadRecords={loadAllRecords}
                 flyToTrigger={flyToTrigger}
+                revealLocation={currentLocation}
+                revealCount={revealCount}
               />
             </motion.div>
           )}
@@ -260,11 +264,14 @@ function App() {
           >
             <IconButton
               icon={<FaShoePrints />}
-              colorScheme="green"
               aria-label="あしあとを残す"
               size="lg"
               borderRadius="full"
-              boxShadow="0 4px 20px rgba(72,187,120,0.45)"
+              bg="linear-gradient(135deg, #f4a261, #e07b39)"
+              color="white"
+              boxShadow="0 4px 24px rgba(244,162,97,0.6), 0 0 0 0 rgba(244,162,97,0.4)"
+              _hover={{ bg: "linear-gradient(135deg, #f6b47a, #e88a50)" }}
+              _active={{ transform: "scale(0.92)" }}
               onClick={handleAddLocationIconButtonClick}
             />
           </motion.div>
