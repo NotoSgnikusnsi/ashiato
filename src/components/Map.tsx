@@ -19,7 +19,7 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 
 type Props = {
@@ -65,14 +65,22 @@ const FogOfWarLayer: React.FC<{
   const animRef = useRef<{ radius: number; loc: { lat: number; lon: number } } | null>(null);
   const rafRef = useRef<number>(0);
 
+  // pane 内に置く（CSS transform に追従させる）
+  // z-index 300: タイル(200)上・ベクターオーバーレイ(400)下
+  const fogPane = useMemo(() => {
+    const existing = map.getPane("fogPane");
+    if (existing) return existing;
+    const pane = map.createPane("fogPane");
+    pane.style.zIndex = "300";
+    pane.style.pointerEvents = "none";
+    return pane;
+  }, [map]);
+
   const getRevealRadius = useCallback(() => {
     const zoom = map.getZoom();
-    // zoom13 で約 110px、ズームに応じてスケール
     return Math.max(60, 110 * Math.pow(1.6, zoom - 13));
   }, [map]);
 
-  // drawCanvasRef を使うことで animation クロージャ内でも
-  // 最新の records を参照できる
   const drawCanvasRef = useRef<
     (extra?: { loc: { lat: number; lon: number }; radius: number }) => void
   >(() => {});
@@ -84,17 +92,23 @@ const FogOfWarLayer: React.FC<{
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      const container = map.getContainer();
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      canvas.width = w;
-      canvas.height = h;
+      // ── Leaflet.heat と同じ方式 ──────────────────────────────
+      // pane は CSS transform で動くが canvas は pane 内で (0,0) に固定されている。
+      // containerPointToLayerPoint([0,0]) = -mapPanePos なので
+      // この値を canvas の transform に設定することで、
+      // pane の translate を打ち消し「canvas の左上 = 画面の左上」になる。
+      // 描画は latLngToContainerPoint（画面座標）で行えばマーカーと一致する。
+      // ─────────────────────────────────────────────────────────
+      const topLeft = map.containerPointToLayerPoint([0, 0]);
+      canvas.style.transform = `translate3d(${Math.round(topLeft.x)}px,${Math.round(topLeft.y)}px,0)`;
 
-      // 暗幕
+      const size = map.getSize();
+      canvas.width = size.x;
+      canvas.height = size.y;
+
       ctx.fillStyle = "rgba(8, 12, 28, 0.88)";
-      ctx.fillRect(0, 0, w, h);
+      ctx.fillRect(0, 0, size.x, size.y);
 
-      // 訪れた場所を円形に切り抜く
       ctx.globalCompositeOperation = "destination-out";
 
       const drawReveal = (lat: number, lon: number, radius: number) => {
@@ -119,12 +133,12 @@ const FogOfWarLayer: React.FC<{
     [map, records, getRevealRadius]
   );
 
-  // ref を常に最新に保つ
   drawCanvasRef.current = drawCanvas;
 
   useMapEvents({
     move: () => drawCanvasRef.current(animRef.current ?? undefined),
     zoom: () => drawCanvasRef.current(animRef.current ?? undefined),
+    viewreset: () => drawCanvasRef.current(),
     resize: () => drawCanvasRef.current(),
   });
 
@@ -132,7 +146,6 @@ const FogOfWarLayer: React.FC<{
     drawCanvas();
   }, [drawCanvas]);
 
-  // 新しい足跡を残したときの「光が広がる」アニメーション
   useEffect(() => {
     if (revealCount === 0 || !revealLocation) return;
     const loc = { ...revealLocation };
@@ -157,15 +170,12 @@ const FogOfWarLayer: React.FC<{
     return () => cancelAnimationFrame(rafRef.current);
   }, [revealCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // map.getContainer() に直接置く（pane の外）。
-  // pane 内に置くと CSS transform で地図と一緒にズレるため、
-  // Canvas は動かさず latLngToContainerPoint（ビューポート基準）で描画する。
   return createPortal(
     <canvas
       ref={canvasRef}
-      style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none", zIndex: 450 }}
+      style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
     />,
-    map.getContainer()
+    fogPane
   );
 };
 
