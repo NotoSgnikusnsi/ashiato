@@ -19,7 +19,7 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 
 type Props = {
@@ -64,16 +64,6 @@ const FogOfWarLayer: React.FC<{
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<{ radius: number; loc: { lat: number; lon: number } } | null>(null);
   const rafRef = useRef<number>(0);
-
-  // Leaflet のカスタムペイン（z-index 300: タイル上・ベクター下）
-  const fogPane = useMemo(() => {
-    const existing = map.getPane("fogPane");
-    if (existing) return existing;
-    const pane = map.createPane("fogPane");
-    pane.style.zIndex = "300";
-    pane.style.pointerEvents = "none";
-    return pane;
-  }, [map]);
 
   const getRevealRadius = useCallback(() => {
     const zoom = map.getZoom();
@@ -167,12 +157,15 @@ const FogOfWarLayer: React.FC<{
     return () => cancelAnimationFrame(rafRef.current);
   }, [revealCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // map.getContainer() に直接置く（pane の外）。
+  // pane 内に置くと CSS transform で地図と一緒にズレるため、
+  // Canvas は動かさず latLngToContainerPoint（ビューポート基準）で描画する。
   return createPortal(
     <canvas
       ref={canvasRef}
-      style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+      style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none", zIndex: 450 }}
     />,
-    fogPane
+    map.getContainer()
   );
 };
 
