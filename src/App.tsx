@@ -1,18 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./style/App.css";
 import {
   ChakraProvider,
-  Container,
   Box,
-  Spinner,
   IconButton,
   useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
-import { FaShoePrints, FaRegCompass } from "react-icons/fa6";
+import { FaShoePrints, FaArrowsRotate } from "react-icons/fa6";
+import { AnimatePresence, motion } from "framer-motion";
 import { openDB, fetchAllRecords } from "./services/indexeddbClient.ts";
 import type { Place } from "./services/indexeddbClient.ts";
+import { isNewLocation } from "./services/locationService.ts";
 import Map from "./components/Map.tsx";
 import FormModal from "./components/FormModal.tsx";
+import Navigation from "./components/Navigation.tsx";
+import type { View } from "./components/Navigation.tsx";
+import Timeline from "./components/Timeline.tsx";
+import Stats from "./components/Stats.tsx";
+import StampOverlay from "./components/StampOverlay.tsx";
 
 function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -21,145 +27,296 @@ function App() {
     lon: number;
   } | null>(null);
   const [records, setRecords] = useState<Place[]>([]);
-  const [isDBLoading, setIsDBLoading] = useState(false);
   const [db, setDb] = useState<IDBDatabase | null>(null);
+  const [currentView, setCurrentView] = useState<View>("map");
+  const [showStamp, setShowStamp] = useState(false);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
 
-  // 全てのレコードを読み込む
-  const loadAllRecords = () => {
-    setIsDBLoading(true);
-    if (db) {
-      fetchAllRecords(db)
-        .then((records) => {
-          setRecords(records);
-          setIsDBLoading(false);
-        })
-        .catch(() => {
-          console.error("Error fetching records");
-          setIsDBLoading(false);
+  // ジオフェンシング: 最新の records を closure の外から参照するための ref
+  const recordsRef = useRef<Place[]>([]);
+  recordsRef.current = records;
+
+  // 直前に通知した地点（連続通知防止）
+  const lastNotifiedRef = useRef<{ lat: number; lon: number } | null>(null);
+
+  // ============================================================
+  // データ操作
+  // ============================================================
+
+  const loadAllRecords = (database?: IDBDatabase) => {
+    const targetDb = database ?? db;
+    if (!targetDb) return;
+    fetchAllRecords(targetDb)
+      .then(setRecords)
+      .catch(() => {
+        toast({
+          title: "記録の読み込みに失敗しました",
+          status: "error",
+          position: "top",
+          duration: 3000,
         });
-    } else {
-      alert("データベースにアクセスできません");
-      setIsDBLoading(false);
-    }
+      });
   };
 
-  // 現在地を取得する
-  const fetchCurrentLocation = () => {
-    if (navigator.geolocation) {
+  // ============================================================
+  // 位置情報
+  // ============================================================
+
+  const fetchCurrentLocation = (): Promise<{ lat: number; lon: number }> =>
+    new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation not supported"));
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          });
-          console.log("位置情報を取得しました！！！");
+        (pos) => {
+          const loc = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+          };
+          setCurrentLocation(loc);
+          resolve(loc);
         },
-        (error) => {
-          alert("位置情報の取得に失敗しました: " + error.message);
-        }
+        reject,
+        { enableHighAccuracy: true, timeout: 10000 }
       );
-    } else {
-      alert("このブラウザーは位置情報に対応していません");
+    });
+
+  // 新しい場所に来たらブラウザ通知を送る
+  const checkGeofencing = (lat: number, lon: number) => {
+    const saved = recordsRef.current.map((r) => r.location);
+    if (!isNewLocation(lat, lon, saved)) return;
+
+    const last = lastNotifiedRef.current;
+    if (
+      last &&
+      Math.abs(last.lat - lat) < 0.003 &&
+      Math.abs(last.lon - lon) < 0.003
+    )
+      return;
+
+    lastNotifiedRef.current = { lat, lon };
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("🐾 新しい場所にいます！", {
+        body: "足跡を残しませんか？",
+        icon: "/favicon.ico",
+      });
     }
   };
 
-  // ボタンが押されたとき、カメラを起動して画像を選択する
-  const handleAddLocationIconButtonClick = () => {
-    fetchCurrentLocation();
+  // ============================================================
+  // UI ハンドラー
+  // ============================================================
+
+  const handleAddLocationIconButtonClick = async () => {
+    setCurrentView("map");
+    try {
+      await fetchCurrentLocation();
+    } catch {
+      toast({
+        title: "位置情報の取得に失敗しました",
+        status: "warning",
+        position: "top",
+        duration: 3000,
+      });
+    }
     const fileElem = document.getElementById("fileElem") as HTMLInputElement;
-    fileElem ? fileElem.click() : alert("カメラの起動に失敗しました");
+    if (fileElem) {
+      fileElem.value = "";
+      fileElem.click();
+    }
   };
 
-  // 画像が選択されたとき、画像を読み込み表示する
-  const handleSelectImageChange = async (
+  const handleSelectImageChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const selectFile = e.target.files?.[0];
-    if (!selectFile || !selectFile.type.includes("image")) {
-      alert("画像が選択されていません");
-      return;
-    }
+    const file = e.target.files?.[0];
+    if (!file?.type.includes("image")) return;
     const reader = new FileReader();
     reader.onloadend = () => {
       setSelectedImage(reader.result as string);
       onOpen();
     };
-    reader.readAsDataURL(selectFile);
+    reader.readAsDataURL(file);
   };
 
+  const handleSaveSuccess = () => {
+    setShowStamp(true);
+    setTimeout(() => setShowStamp(false), 2200);
+  };
+
+  // ============================================================
+  // 初期化 & 位置監視
+  // ============================================================
+
   useEffect(() => {
+    // DB 初期化
     openDB()
-      .then((db) => {
-        setDb(db);
-        console.log("データベースにアクセスしました！！！");
+      .then((database) => {
+        setDb(database);
+        loadAllRecords(database);
       })
-      .catch((error) => {
-        console.error("データベースにアクセスできません！！！", error);
+      .catch(() => {
+        toast({
+          title: "データベースの初期化に失敗しました",
+          status: "error",
+          position: "top",
+        });
       });
-  }, []);
 
-  useEffect(() => {
-    if (db) {
-      loadAllRecords();
+    // 通知許可をリクエスト
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
     }
-  }, [db]);
 
-  useEffect(() => {
-    fetchCurrentLocation();
-  }, []);
+    // 初回位置取得
+    fetchCurrentLocation().catch(console.warn);
+
+    // 位置の継続監視（ジオフェンシング）
+    if (!navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const loc = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        };
+        setCurrentLocation(loc);
+        checkGeofencing(loc.lat, loc.lon);
+      },
+      (err) => console.warn("位置情報の監視エラー:", err.message),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ============================================================
+  // レンダリング
+  // ============================================================
 
   return (
-    <>
-      <ChakraProvider>
-        <Container maxW={"2xl"} centerContent>
-          {isDBLoading ? (
-            <Spinner />
-          ) : (
-            <Map
-              records={records}
-              location={currentLocation}
-              db={db}
-              loadRecords={loadAllRecords}
-            />
+    <ChakraProvider>
+      <Box position="relative" maxW="2xl" mx="auto" overflow="hidden">
+        {/* ビュー切り替えアニメーション */}
+        <AnimatePresence mode="wait">
+          {currentView === "map" && (
+            <motion.div
+              key="map"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              <Map
+                records={records}
+                location={currentLocation}
+                db={db}
+                loadRecords={loadAllRecords}
+              />
+            </motion.div>
           )}
-          <Box position="fixed" bottom="80px" right="20px" zIndex="1000">
-            <IconButton
-              icon={<FaRegCompass />}
-              colorScheme="blue"
-              aria-label="現在地に戻る"
-              size={"lg"}
-              onClick={loadAllRecords}
-            />
-          </Box>
-          <Box position="fixed" bottom="25px" right="20px" zIndex="1000">
+
+          {currentView === "timeline" && (
+            <motion.div
+              key="timeline"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            >
+              <Timeline records={records} />
+            </motion.div>
+          )}
+
+          {currentView === "stats" && (
+            <motion.div
+              key="stats"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            >
+              <Stats records={records} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* フローティングアクションボタン */}
+        <Box
+          position="fixed"
+          bottom="130px"
+          right="20px"
+          zIndex={1000}
+        >
+          <motion.div
+            whileTap={{ scale: 0.88 }}
+            whileHover={{ scale: 1.08 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
             <IconButton
               icon={<FaShoePrints />}
               colorScheme="green"
-              aria-label="あしあとの残す"
-              size={"lg"}
+              aria-label="あしあとを残す"
+              size="lg"
+              borderRadius="full"
+              boxShadow="0 4px 20px rgba(72,187,120,0.45)"
               onClick={handleAddLocationIconButtonClick}
             />
-            <input
-              type="file"
-              id="fileElem"
-              accept="image/*"
-              capture="environment"
-              style={{ display: "none" }}
-              onChange={handleSelectImageChange}
+          </motion.div>
+          <input
+            type="file"
+            id="fileElem"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={handleSelectImageChange}
+          />
+        </Box>
+
+        <Box
+          position="fixed"
+          bottom="75px"
+          right="20px"
+          zIndex={1000}
+        >
+          <motion.div
+            whileTap={{ scale: 0.88 }}
+            whileHover={{ scale: 1.08 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
+            <IconButton
+              icon={<FaArrowsRotate />}
+              colorScheme="blue"
+              aria-label="記録を更新する"
+              size="md"
+              borderRadius="full"
+              boxShadow="0 4px 14px rgba(66,153,225,0.35)"
+              onClick={() => loadAllRecords()}
             />
-            <FormModal
-              isOpen={isOpen}
-              onClose={onClose}
-              imageSrc={selectedImage}
-              location={currentLocation}
-              db={db}
-              loadRecords={loadAllRecords}
-            />
-          </Box>
-        </Container>
-      </ChakraProvider>
-    </>
+          </motion.div>
+        </Box>
+
+        {/* フォームモーダル */}
+        <FormModal
+          isOpen={isOpen}
+          onClose={onClose}
+          imageSrc={selectedImage}
+          location={currentLocation}
+          db={db}
+          loadRecords={loadAllRecords}
+          onSaveSuccess={handleSaveSuccess}
+        />
+
+        {/* ボトムナビゲーション */}
+        <Navigation currentView={currentView} onViewChange={setCurrentView} />
+
+        {/* 保存成功スタンプアニメーション */}
+        <StampOverlay isVisible={showStamp} />
+      </Box>
+    </ChakraProvider>
   );
 }
 

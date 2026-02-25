@@ -12,6 +12,7 @@ import {
   Image,
   Text,
   Box,
+  useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { addRecord } from "../services/indexeddbClient.ts";
@@ -25,6 +26,7 @@ interface FormModalProps {
   db: IDBDatabase | null;
   onClose: () => void;
   loadRecords: () => void;
+  onSaveSuccess?: () => void;
 }
 
 const FormModal: React.FC<FormModalProps> = ({
@@ -34,79 +36,134 @@ const FormModal: React.FC<FormModalProps> = ({
   db,
   onClose,
   loadRecords,
+  onSaveSuccess,
 }) => {
   const [title, setTitle] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
 
-  // セーブボタンが押されたとき、データベースに書き込む
   const handleSaveLocationButtonClick = async () => {
-    if (db && imageSrc && location) {
+    if (!db || !imageSrc || !location) {
+      toast({
+        title: "データが不足しています",
+        description: "位置情報と画像が必要です",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
       const geocodeData = await reverseGeocode(location.lat, location.lon);
+
       const newRecord: Place = {
         id: Date.now().toString(),
         date: new Date(),
-        title: title,
-        img: imageSrc as string,
-        location: {
-          lat: location.lat,
-          lon: location.lon,
-        },
+        title: title.trim() || "名称未設定",
+        img: imageSrc,
+        location: { lat: location.lat, lon: location.lon },
         country: geocodeData?.country,
         region: geocodeData?.region,
       };
 
-      addRecord(db, newRecord)
-        .then(() => {
-          console.log("データを追加しました！");
-          setTitle("");
-          onClose();
-          loadRecords();
-        })
-        .catch((error) => {
-          console.error("Error adding record: ", error);
-          alert("データの追加に失敗しました");
-        });
-    } else {
-      alert("データが不足しています");
+      await addRecord(db, newRecord);
+
+      setTitle("");
+      onClose();
+      loadRecords();
+
+      toast({
+        title: "🐾 足跡を残しました！",
+        description: [geocodeData?.country, geocodeData?.region]
+          .filter(Boolean)
+          .join(" "),
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+
+      onSaveSuccess?.();
+    } catch (error) {
+      console.error("Error adding record:", error);
+      toast({
+        title: "保存に失敗しました",
+        description: "もう一度試してください",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "top",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <>
-      <Modal isOpen={isOpen} onClose={onClose} scrollBehavior={"inside"}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>あしあとを残す</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={2}>
-            <FormControl mb={2}>
-              <Input
-                placeholder="ここはどこですか？"
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </FormControl>
-            <Box pb={2}>
-              {imageSrc && <Image src={imageSrc} alt="撮影した画像" mb={2} />}
-              {location && (
-                <Text mb={2}>
-                  緯度: {location?.lat} 経度: {location?.lon}
-                </Text>
-              )}
-            </Box>
-          </ModalBody>
+    <Modal isOpen={isOpen} onClose={onClose} scrollBehavior="inside">
+      <ModalOverlay backdropFilter="blur(4px)" bg="blackAlpha.400" />
+      <ModalContent mx={4} borderRadius="2xl" overflow="hidden">
+        <ModalHeader fontSize="lg">🐾 あしあとを残す</ModalHeader>
+        <ModalCloseButton isDisabled={isSaving} />
 
-          <ModalFooter>
-            <Button
-              colorScheme="blue"
-              mr={3}
-              onClick={handleSaveLocationButtonClick}
-            >
-              Save
-            </Button>
-            <Button onClick={onClose}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+        <ModalBody pb={2}>
+          <FormControl mb={3}>
+            <Input
+              placeholder="ここはどこですか？"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              borderRadius="xl"
+              isDisabled={isSaving}
+              onKeyDown={(e) =>
+                e.key === "Enter" && !isSaving && handleSaveLocationButtonClick()
+              }
+            />
+          </FormControl>
+          <Box pb={2}>
+            {imageSrc && (
+              <Image
+                src={imageSrc}
+                alt="撮影した画像"
+                mb={2}
+                borderRadius="xl"
+                maxH="200px"
+                objectFit="cover"
+                w="100%"
+              />
+            )}
+            {location && (
+              <Text mb={2} fontSize="xs" color="gray.400">
+                📍 {location.lat.toFixed(5)}, {location.lon.toFixed(5)}
+              </Text>
+            )}
+          </Box>
+        </ModalBody>
+
+        <ModalFooter gap={2}>
+          <Button
+            colorScheme="green"
+            onClick={handleSaveLocationButtonClick}
+            isLoading={isSaving}
+            loadingText="保存中..."
+            borderRadius="xl"
+            flex={1}
+          >
+            足跡を残す
+          </Button>
+          <Button
+            onClick={onClose}
+            isDisabled={isSaving}
+            borderRadius="xl"
+            variant="ghost"
+          >
+            キャンセル
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
 
