@@ -7,7 +7,7 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
-import { FaShoePrints, FaArrowsRotate } from "react-icons/fa6";
+import { FaShoePrints, FaLocationCrosshairs } from "react-icons/fa6";
 import { AnimatePresence, motion } from "framer-motion";
 import { openDB, fetchAllRecords } from "./services/indexeddbClient.ts";
 import type { Place } from "./services/indexeddbClient.ts";
@@ -30,6 +30,7 @@ function App() {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const [currentView, setCurrentView] = useState<View>("map");
   const [showStamp, setShowStamp] = useState(false);
+  const [flyToTrigger, setFlyToTrigger] = useState(0);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -215,6 +216,7 @@ function App() {
                 location={currentLocation}
                 db={db}
                 loadRecords={loadAllRecords}
+                flyToTrigger={flyToTrigger}
               />
             </motion.div>
           )}
@@ -288,13 +290,26 @@ function App() {
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
             <IconButton
-              icon={<FaArrowsRotate />}
+              icon={<FaLocationCrosshairs />}
               colorScheme="blue"
-              aria-label="記録を更新する"
+              aria-label="現在地へ移動"
               size="md"
               borderRadius="full"
               boxShadow="0 4px 14px rgba(66,153,225,0.35)"
-              onClick={() => loadAllRecords()}
+              onClick={async () => {
+                setCurrentView("map");
+                try {
+                  await fetchCurrentLocation();
+                  setFlyToTrigger((n) => n + 1);
+                } catch {
+                  toast({
+                    title: "位置情報の取得に失敗しました",
+                    status: "warning",
+                    position: "top",
+                    duration: 3000,
+                  });
+                }
+              }}
             />
           </motion.div>
         </Box>

@@ -4,6 +4,7 @@ import {
   Polyline,
   CircleMarker,
   useMapEvents,
+  useMap,
   TileLayer,
 } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
@@ -18,16 +19,32 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Props = {
   records: Place[];
   location: { lat: number; lon: number } | null;
   db: IDBDatabase | null;
   loadRecords: () => void;
+  flyToTrigger?: number;
 };
 
-const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
+const FlyToController: React.FC<{
+  location: { lat: number; lon: number } | null;
+  trigger: number;
+}> = ({ location, trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (trigger > 0 && location) {
+      map.flyTo([location.lat, location.lon], Math.max(map.getZoom(), 14), {
+        duration: 1.2,
+      });
+    }
+  }, [trigger]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+};
+
+const Map: React.FC<Props> = ({ records, location, db, loadRecords, flyToTrigger = 0 }) => {
   // 初期値を設定する
   const [zoomLevel, setZoomLevel] = useState(12);
   const height = "100dvh";
@@ -93,6 +110,7 @@ const Map: React.FC<Props> = ({ records, location, db, loadRecords }) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapEvents />
+        <FlyToController location={location} trigger={flyToTrigger} />
         <Polyline positions={polyline} />
         {records.map((record) => (
           <CircleMarker
